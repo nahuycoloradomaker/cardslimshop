@@ -9,46 +9,50 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Montserrat:wght@600;800&display=swap" rel="stylesheet">
   <style>
     :root{--p:#00ff9d;--pd:#00cc7d;--s:#7b61ff;--bg:#0a0a0a;--c:#151515;--t:#fff;--d:#ff4757}
-    body{background:var(--bg);color:var(--t);font-family:Montserrat,sans-serif;padding-bottom:100px}
-    h1{font-family:Orbitron,sans-serif;font-size:42px;text-align:center;background:linear-gradient(90deg,var(--p),var(--s));-webkit-background-clip:text;color:transparent}
+    body{background:var(--bg);color:var(--t);font-family:Montserrat,sans-serif;padding-bottom:100px; margin:0}
+    h1{font-family:Orbitron,sans-serif;font-size:42px;text-align:center;background:linear-gradient(90deg,var(--p),var(--s));-webkit-background-clip:text;color:transparent;margin:20px 0}
     .balance{background:var(--c);padding:20px;border-radius:20px;margin:20px;text-align:center;font-size:32px;font-weight:bold;border:2px solid var(--p)}
-    .cards{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));padding:20px}
-    .card{background:var(--c);border-radius:20px;overflow:hidden;position:relative;box-shadow:0 10px 20px rgba(0,0,0,.5)}
+    .cards{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));padding:0 20px}
+    .card{background:var(--c);border-radius:20px;overflow:hidden;position:relative;box-shadow:0 10px 25px rgba(0,0,0,.6);transition:.3s}
+    .card:hover{transform:translateY(-10px)}
     .card img{width:100%;height:180px;object-fit:cover}
     .info{padding:20px}
-    .name{font-size:20px;font-weight:bold}
-    .rarity{margin:10px 0;color:#aaa}
+    .name{font-size:20px;font-weight:bold;margin-bottom:8px}
+    .rarity{margin:8px 0;color:#aaa}
     .price{font-size:28px;color:var(--p);font-weight:bold}
-    .stock{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.8);padding:5px 12px;border-radius:20px;font-size:14px}
-    .buy{width:100%;padding:16px;background:var(--p);color:#000;border:none;font-weight:bold;font-size:18px;cursor:pointer}
-    .soldout{opacity:.6;pointer-events:none}
-    .soldout .buy{background:#444;color:#888}
-    .soldout::after{content:"РАСПРОДАНО";position:absolute;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--d);font-weight:bold}
-    .empty{text-align:center;padding:80px;font-size:24px;color:#aaa}
-    .close{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:16px 50px;background:#333;color:white;border-radius:30px;font-size:18px;cursor:pointer}
+    .stock{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.8);padding:6px 14px;border-radius:20px;font-size:14px;font-weight:bold}
+    .buy{width:100%;padding:16px;background:var(--p);color:#000;border:none;font-weight:bold;font-size:18px;cursor:pointer;border-radius:12px}
+    .soldout{opacity:.6}
+    .soldout .buy{background:#444;color:#888;cursor:not-allowed}
+    .soldout::after{content:"РАСПРОДАНО";position:absolute;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;font-size:36px;color:var(--d);font-weight:bold}
+    .empty{text-align:center;padding:100px 20px;font-size:28px;color:#666}
+    .close{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:16px 60px;background:#333;color:white;border-radius:30px;font-size:18px;cursor:pointer;z-index:10}
   </style>
 </head>
 <body>
   <h1>ETERN SHOP</h1>
   <div class="balance">Баланс: <span id="bal">—</span> ₭</div>
-  <div class="cards" id="list"><div class="empty">Грузим лимитки...</div></div>
-  <button class="close" onclick="Telegram.WebApp.close()">ЗАКРЫТЬ</button>
+  <div class="cards" id="list"><div class="empty">Грузим годноту...</div></div>
+  <button class="close" onclick="Telegram.WebApp.close()">ЗАКРЫТЬ МАГАЗИН</button>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand(); tg.ready();
-    const userId = tg.initDataUnsafe.user?.id;
+    const userId = tg.initDataUnsafe.user?.id || 0;
 
     async function load() {
       try {
-        const r = await fetch(`https://eternium-shop.onrender.com/shop?user_id=${userId}&t=${Date.now()}`);
+        const r = await fetch("https://raw.githubusercontent.com/nahuycoloradomaker/cardslimshop/main/data.json?t=" + Date.now());
         const d = await r.json();
         document.getElementById("bal").textContent = Number(d.balance).toLocaleString();
 
         const list = document.getElementById("list");
-        list.innerHTML = d.cards.length === 0 
-          ? '<div class="empty">НЕТ ХУЙНИ В ПРОДАЖЕ<br>Жди от админа Red Circle</div>'
-          : '';
+        list.innerHTML = "";
+
+        if (d.cards.length === 0) {
+          list.innerHTML = '<div class="empty">НЕТ ХУЙНИ В ПРОДАЖЕ<br>Жди админа Yellow Circle</div>';
+          return;
+        }
 
         d.cards.forEach(c => {
           const left = c.stock === 0 ? "∞" : c.stock - c.sold;
@@ -71,18 +75,14 @@
           list.appendChild(div);
         });
       } catch(e) {
-        document.getElementById("list").innerHTML = '<div class="empty" style="color:red">ПИЗДЕЦ, НЕ ГРУЗИТСЯ<br>Админ спит</div>';
+        list.innerHTML = '<div class="empty" style="color:red">ПИЗДЕЦ<br>data.json пропал</div>';
       }
     }
 
     function buy(id) {
       confetti({particleCount:200,spread:100,origin:{y:0.6}});
-      fetch("https://eternium-shop.onrender.com/buy", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({user_id:userId, card_id:id})
-      });
-      setTimeout(() => location.reload(), 1200);
+      tg.sendData(JSON.stringify({action:"buy", card_id:id}));
+      setTimeout(() => tg.close(), 1200);
     }
 
     load();
